@@ -55,7 +55,7 @@ function write_dot_graph(filename::String, imdp::IMDP; initial_state::Int=1)
 
                 for idx in findall(>(0.), imdp.P̂[row_idx, :])
                     state_p = idx
-                    @printf(f, "  %d -> %d [label=<a<SUB>%d</SUB>: %.1f-%.1f >]\n", state, state_p, action, imdp.P̌[row_idx,state_p], imdp.P̂[row_idx,state_p])
+                    @printf(f, "  %d -> %d [label=<a<SUB>%d</SUB>: %.2f-%.2f >]\n", state, state_p, action, imdp.P̌[row_idx,state_p], imdp.P̂[row_idx,state_p])
                 end
             end
         end
