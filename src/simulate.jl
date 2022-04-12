@@ -24,3 +24,34 @@ function transition(imdp::IMDP, state::Int, action::Int)
     new_state = sample(successors, Weights(p_vals))
     return new_state
 end
+
+"""
+    simulate(imdp::IMDP, accepting_states, sink_states)
+
+Simulate an IMDP until an accepting or sink state is reached with an optional Markovian strategy. 
+"""
+function simulate(imdp::IMDP, accepting_states, sink_states; initial_state = 1, max_iterations = 10, strategy = nothing)
+
+    state_history = [initial_state]
+    action_history = []
+    iterations = 0
+
+    current_state = initial_state
+    @show current_state
+    while iterations < max_iterations
+        action = isnothing(strategy) ? rand(imdp.actions) : strategy[current_state]
+        new_state = transition(imdp, current_state, action)
+        push!(state_history, new_state)
+        push!(action_history, action)
+        current_state = new_state
+
+        @show action
+        @show new_state
+
+        if new_state ∈ accepting_states || new_state ∈ sink_states
+            break
+        end
+        iterations += 1
+    end
+    return state_history, action_history
+end
