@@ -1,4 +1,4 @@
-name = "IMDP"
+name = "IMDPs"
 uuid = "facd0f59-d146-4cf0-80be-65a31ff3c170"
 authors = ["John Jackson", "University of Colorado Boulder"]
 version = "0.1.0"

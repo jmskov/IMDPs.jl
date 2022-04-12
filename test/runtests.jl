@@ -1,6 +1,6 @@
-using IMDP
+using IMDPs
 using Test
 
-@testset "IMDP.jl" begin
+@testset "IMDPs.jl" begin
     # Write your tests here.
 end
