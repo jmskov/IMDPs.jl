@@ -4,7 +4,7 @@
 Perform verification of a bounded-until property indicated by phi1 U phi2 within k steps (k = -1 is infinite horizon)
 """
 function bounded_until(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String, 
-                      k::Int, filename::String; synthesis_flag=false)
+                      k::Int, result_dir::String, filename::String; synthesis_flag=false)
 
     # Convert labels dictionary to an array 
     labels_vector = Array{String}(undef, length(imdp.states))
@@ -18,9 +18,10 @@ function bounded_until(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String,
     sink_states = isnothing(phi1) ? [] : findall(x->!(x==phi1 || x==phi2), labels_vector)
 
     # Write the IMDP to file 
-    write(filename, imdp, acc_states=acc_states, sink_states=sink_states)
+    imdp_filename = "$result_dir/$filename-IMDP.txt"
+    write(imdp_filename, imdp, acc_states=acc_states, sink_states=sink_states)
     mode1 = synthesis_flag ? "maximize" : "minimize"
-    result_mat = run_imdp_synthesis(filename, k; mode1=mode1, mode2="pessimistic")
+    result_mat = run_imdp_synthesis(imdp_filename, k; mode1=mode1, mode2="pessimistic", tag=filename)
 
     return result_mat 
 end
@@ -30,12 +31,12 @@ end
 
 Perform verification of a global property indicated by phi for k steps (k = -1 is infinite horizon)
 """
-function globally(imdp::IMDP, phi::String, k::Int, filename::String; synthesis_flag=false)
+function globally(imdp::IMDP, phi::String, k::Int, results_dir::String, filename::String; synthesis_flag=false)
 
     phi1 = nothing
     phi2 = "!$phi"
 
-    result_mat = bounded_until(imdp, phi1, phi2, k, filename, synthesis_flag=synthesis_flag)
+    result_mat = bounded_until(imdp, phi1, phi2, k, results_dir, filename, synthesis_flag=synthesis_flag)
     safety_result_mat = zeros(size(result_mat))
     safety_result_mat[:, 1] = result_mat[:, 1]
     safety_result_mat[:, 2] = result_mat[:, 2]
@@ -55,14 +56,15 @@ Call the bounded MDP synthesis tool with the given inputs.
 - mode1::String -- either "minimize" or "maximize" 
 - mode2::String -- either "pessimistic" or "optimistic"
 """
-function run_imdp_synthesis(imdp_file, k; mode1="maximize", mode2="pessimistic")
+function run_imdp_synthesis(imdp_file, k; mode1="maximize", mode2="pessimistic", tag=nothing)
     exe_path = "/usr/local/bin/synthesis"  # Assumes that this program is on the user's path
     @assert isfile(imdp_file)
     # TODO: Julia implementation on this tool
     # TODO: Or a way to use it without explicitly saving the IMDP
     res = read(`$exe_path $mode1 $mode2 $k 0.000001 $imdp_file`, String)
     dst_dir = dirname(imdp_file)
-    open("$dst_dir/verification-result-$k.txt", "w") do f
+    result_name = isnothing(tag) ? "verification-result" : "$tag-result"
+    open("$dst_dir/$result_name-$k.txt", "w") do f
         print(f, res) 
     end
     res_mat = res_to_numbers(res)
