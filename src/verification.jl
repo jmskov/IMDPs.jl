@@ -1,4 +1,22 @@
 """
+    pctl_verification
+
+Given an IMDP and labels, performs PCTL verification.
+"""
+function pctl_verification(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String, 
+    k::Int, result_dir::String, filename::String; synthesis_flag=false)
+
+    if isnothing(phi1) 
+        @info "Performing $k-step global PCTL verification: G^[$k] $phi2" 
+        result_mat = globally(imdp, phi2, k, result_dir, filename; synthesis_flag=synthesis_flag)
+    else
+        @info "Performing bounded-until PCTL verification: $phi1 U^[$k] $phi2"
+        result_mat = bounded_until(imdp, phi1, phi2, k, result_dir, filename; synthesis_flag=synthesis_flag)
+    end
+    return result_mat
+end
+
+"""
     bounded_until
 
 Perform verification of a bounded-until property indicated by phi1 U phi2 within k steps (k = -1 is infinite horizon)
