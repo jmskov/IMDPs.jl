@@ -105,3 +105,18 @@ function res_to_numbers(res_string)
 
     return res_mat
 end
+
+function load_result(filename; globally_safe=false)
+    f = open(filename)
+    res_string = read(f, String)
+    res_mat = res_to_numbers(res_string)
+
+    if globally_safe
+        safety_result_mat = copy(res_mat)
+        safety_result_mat[:, 3] = 1 .- res_mat[:, 4]
+        safety_result_mat[:, 4] = 1 .- res_mat[:, 3]
+        res_mat = safety_result_mat
+    end
+
+    return res_mat
+end
