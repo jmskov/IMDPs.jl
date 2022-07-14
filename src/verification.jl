@@ -22,7 +22,7 @@ end
 Perform verification of a bounded-until property indicated by phi1 U phi2 within k steps (k = -1 is infinite horizon)
 """
 function bounded_until(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String, 
-                      k::Int, result_dir::String, filename::String; synthesis_flag=false)
+                      k::Int, result_dir::String, filename::String; synthesis_flag=false, Qyes=[])
 
     # Convert labels dictionary to an array 
     labels_vector = Array{String}(undef, length(imdp.states))
@@ -33,7 +33,15 @@ function bounded_until(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String,
     
     # Get the Qyes and Qno states
     acc_states = findall(x->x==phi2, labels_vector)
+
     sink_states = isnothing(phi1) ? [] : findall(x->!(x==phi1 || x==phi2), labels_vector)
+
+    if !isempty(Qyes)
+        # Define sink states differently
+        all_states = collect(1:length(labels_vector))
+        good_idxs = sort(acc_states ∪ Qyes)
+        sink_states = deleteat!(all_states, good_idxs)
+    end
 
     # Write the IMDP to file 
     imdp_filename = "$result_dir/$filename-IMDP.txt"
