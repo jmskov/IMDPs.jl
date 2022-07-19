@@ -19,7 +19,7 @@ function write(filename::String, imdp::IMDP; acc_states=[], sink_states=[])
                     # Something about if the upper bound is less than one? Perhaps for numerical issues?
                     @debug action, i
                     psum = sum(imdp.P̂[row_idx, :])
-                    psum >= 1 ? nothing : throw(AssertionError("Bad max sum: $psum")) 
+                    psum >= 1 ? nothing : throw(AssertionError("Bad max sum: $psum for state $i")) 
                     for j=ij
                         @printf(f, "%d %d %d %f %f", i-1, action-1, j-1, imdp.P̌[row_idx, j], imdp.P̂[row_idx, j])
                         if (i < state_num || j < ij[end] || action < action_num)
