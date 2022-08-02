@@ -4,14 +4,14 @@
 Given an IMDP and labels, performs PCTL verification.
 """
 function pctl_verification(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String, 
-    k::Int, result_dir::String, filename::String; synthesis_flag=false)
+    k::Int, result_dir::String, spec_name::String; synthesis_flag=false)
 
     if isnothing(phi1) 
         @info "Performing $k-step global PCTL verification: G^[$k] $phi2" 
-        result_mat = globally(imdp, phi2, k, result_dir, filename; synthesis_flag=synthesis_flag)
+        result_mat = globally(imdp, phi2, k, result_dir, spec_name; synthesis_flag=synthesis_flag)
     else
         @info "Performing bounded-until PCTL verification: $phi1 U^[$k] $phi2"
-        result_mat = bounded_until(imdp, phi1, phi2, k, result_dir, filename; synthesis_flag=synthesis_flag)
+        result_mat = bounded_until(imdp, phi1, phi2, k, result_dir, spec_name; synthesis_flag=synthesis_flag)
     end
     return result_mat
 end
@@ -22,7 +22,7 @@ end
 Perform verification of a bounded-until property indicated by phi1 U phi2 within k steps (k = -1 is infinite horizon)
 """
 function bounded_until(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String, 
-                      k::Int, result_dir::String, filename::String; synthesis_flag=false, Qyes=[])
+                      k::Int, result_dir::String, spec_name::String; synthesis_flag=false, Qyes=[])
 
     # Convert labels dictionary to an array 
     labels_vector = Array{String}(undef, length(imdp.states))
@@ -44,10 +44,10 @@ function bounded_until(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String,
     end
 
     # Write the IMDP to file 
-    imdp_filename = "$result_dir/$filename-IMDP.txt"
+    imdp_filename = "$result_dir/$spec_name-IMDP.txt"
     write(imdp_filename, imdp, acc_states=acc_states, sink_states=sink_states)
     mode1 = synthesis_flag ? "maximize" : "minimize"
-    result_mat = run_imdp_synthesis(imdp_filename, k; mode1=mode1, mode2="pessimistic", tag=filename)
+    result_mat = run_imdp_synthesis(imdp_filename, k; mode1=mode1, mode2="pessimistic", tag=spec_name)
 
     return result_mat 
 end
@@ -57,12 +57,12 @@ end
 
 Perform verification of a global property indicated by phi for k steps (k = -1 is infinite horizon)
 """
-function globally(imdp::IMDP, phi::String, k::Int, results_dir::String, filename::String; synthesis_flag=false)
+function globally(imdp::IMDP, phi::String, k::Int, results_dir::String, spec_name::String; synthesis_flag=false)
 
     phi1 = nothing
     phi2 = "!$phi"
 
-    result_mat = bounded_until(imdp, phi1, phi2, k, results_dir, filename, synthesis_flag=synthesis_flag)
+    result_mat = bounded_until(imdp, phi1, phi2, k, results_dir, spec_name, synthesis_flag=synthesis_flag)
     safety_result_mat = zeros(size(result_mat))
     safety_result_mat[:, 1] = result_mat[:, 1]
     safety_result_mat[:, 2] = result_mat[:, 2]

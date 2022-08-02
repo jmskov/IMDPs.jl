@@ -1,6 +1,7 @@
 # Files for writing IMDPs to file
 
 function write(filename::String, imdp::IMDP; acc_states=[], sink_states=[])
+    mkpath(dirname(filename))    
     open(filename, "w") do f
         state_num = length(imdp.states)
         action_num =length(imdp.actions)
