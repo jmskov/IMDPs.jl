@@ -89,6 +89,6 @@ function construct_DFA_IMDP_product(dfa, imdp)
         sink_labels[dfa_sink_state:sizeQ:M*sizeQ] .= 1
     end
 
-    pimdp = SystemProductIMDP(pimdp_state_idxs, imdp.actions, Pmin_new, Pmax_new, imdp.labels, pimdp_states, labels, sink_labels)
+    pimdp = SystemProductIMDP(pimdp_state_idxs, imdp.actions, Pmin_new, Pmax_new, Dict(), pimdp_states, labels, sink_labels)
     return pimdp 
 end

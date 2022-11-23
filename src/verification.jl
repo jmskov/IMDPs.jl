@@ -82,19 +82,51 @@ Call the bounded MDP synthesis tool with the given inputs.
 - mode1::String -- either "minimize" or "maximize" 
 - mode2::String -- either "pessimistic" or "optimistic"
 """
-function run_imdp_synthesis(imdp_file, k; mode1="maximize", mode2="pessimistic", tag=nothing)
+function run_imdp_synthesis(imdp_file, horizon; mode1="maximize", mode2="pessimistic", tag=nothing)
     exe_path = "/usr/local/bin/synthesis"  # Assumes that this program is on the user's path
     @assert isfile(imdp_file)
     # TODO: Julia implementation on this tool
     # TODO: Or a way to use it without explicitly saving the IMDP
-    res = read(`$exe_path $mode1 $mode2 $k 0.000001 $imdp_file`, String)
+    res = read(`$exe_path $mode1 $mode2 $horizon 0.000001 $imdp_file`, String)
     dst_dir = dirname(imdp_file)
-    result_name = isnothing(tag) ? "verification-result" : "$tag-result"
-    open("$dst_dir/$result_name-$k.txt", "w") do f
-        print(f, res) 
-    end
+    result_name = isnothing(tag) ? "$dst_dir/verification-$mode1-$mode2-$horizon-result.txt" : "$dst_dir/$tag-$mode1-$mode2-$horizon-result.txt"
+    save_result_mat(result_name, res)
     res_mat = res_to_numbers(res)
     return res_mat
+end
+
+"""
+Run optimistic IMDP syntheis, both on the LB and UB
+"""
+function optimistic_synthesis(imdp_file, horizon; tag=nothing)
+    res_mat = run_imdp_synthesis(imdp_file, horizon, tag=tag)
+    res_mat_opt = run_imdp_synthesis(imdp_file, horizon, mode2="optimistic", tag=tag)
+    for j in 1:length(res_mat[:,1])
+        if res_mat[j, 3] == res_mat_opt[j, 3] && res_mat_opt[j,4] > res_mat[j,4] 
+            res_mat[j, 2] = res_mat_opt[j, 2]
+            res_mat[j, 4] = res_mat_opt[j, 4] 
+        end
+    end
+
+    dst_dir = dirname(imdp_file)
+    result_name = isnothing(tag) ? "$dst_dir/verification-all-opt-$horizon-result.txt" : "$dst_dir/$tag-all-opt-$horizon-result.txt"
+    save_result_mat_string(result_name, res_mat)
+    
+    return res_mat
+end
+
+function save_result_mat(filename, res_mat)
+    open(filename, "w") do f
+        print(f, res_mat) 
+    end
+end
+
+function save_result_mat_string(filename, res_mat)
+    open(filename, "w") do f
+        for i=1:size(res_mat,1)
+            @printf(f, "%d %d %f %f\n", i-1, res_mat[i,2]-1, res_mat[i,3], res_mat[i,4])
+        end
+    end 
 end
 
 # Creates a matrix from the string output of the BMDP synthesis tool.
