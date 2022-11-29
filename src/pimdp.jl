@@ -21,6 +21,7 @@ struct SystemProductIMDP <: IMDP
     state_tuples
     accepting_flags
     sink_flags
+    dfa::DFA
 end
 
 
@@ -89,6 +90,6 @@ function construct_DFA_IMDP_product(dfa, imdp)
         sink_labels[dfa_sink_state:sizeQ:M*sizeQ] .= 1
     end
 
-    pimdp = SystemProductIMDP(pimdp_state_idxs, imdp.actions, Pmin_new, Pmax_new, Dict(), pimdp_states, labels, sink_labels)
+    pimdp = SystemProductIMDP(pimdp_state_idxs, imdp.actions, Pmin_new, Pmax_new, Dict(), pimdp_states, labels, sink_labels, dfa)
     return pimdp 
 end
