@@ -56,6 +56,7 @@ function construct_DFA_IMDP_product(dfa, imdp)
         end
     end
 
+    # TODO: Do not do this explicitly
     for sq in pimdp_states
         for a in pimdp_actions
             for sqp in pimdp_states
@@ -66,8 +67,8 @@ function construct_DFA_IMDP_product(dfa, imdp)
                     if (sq[2] == dfa_acc_state && sqp[2] == dfa_acc_state) || (sq[2] == dfa_sink_state && sqp[2] == dfa_sink_state)
                         # Flush out the old probabilities
                         col_idx = (sq[1]-1)*sizeQ + sq[2]  
-                        # Pmin_new[row_idx, :] .= 0.  # Redundant??
-                        # Pmax_new[row_idx, :] .= 0.
+                        Pmin_new[row_idx, :] .= 0. 
+                        Pmax_new[row_idx, :] .= 0.
                         Pmin_new[row_idx, col_idx] = 1.0
                         Pmax_new[row_idx, col_idx] = 1.0
                     else

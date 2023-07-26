@@ -39,6 +39,18 @@ function create_imdp(P̌_array, P̂_array)
 end
 
 """
+    create_imdp
+
+Create an IMDP with multiple modes and add labels to states from a specification file.
+"""
+function create_imdp(P̌_array, P̂_array, specification_filename::String, state_means)
+    imdp = IMDPs.create_imdp(P̌_array, P̂_array)
+    lbl, _, _, _, _, _ = IMDPs.load_PCTL_specification(specification_filename)
+    create_imdp_labels(lbl, imdp, state_means)
+    return imdp
+end
+
+"""
     validate(imdp::IMDP)
 
 Validate that the IMDP transition intervals are in expected ranges.
@@ -50,3 +62,32 @@ function validate(imdp::IMDP)
     end
 end
 
+"""
+    create_imdp_labels
+
+Label each state of an IMDP with states in continous space using a label function.
+"""
+function create_imdp_labels(labels_fn, imdp, all_state_means)
+    for i = eachindex(all_state_means) 
+        imdp.labels[i] = labels_fn(all_state_means[i])
+    end
+    imdp.labels[length(imdp.states)] = labels_fn(nothing, unsafe=true)
+end
+
+"""
+    is_point_in_rectangle
+
+Checks whether the given point is inside the hyperrectangle.
+"""
+function is_point_in_rectangle(pt, rectangle)
+	dim = length(pt)
+	# Format of rectange: [lowers, uppers]
+	res = true
+	for i=1:dim
+		res = rectangle[i] <= pt[i] <= rectangle[i+dim]
+		if !res 
+			return false
+		end
+	end
+	return true
+end

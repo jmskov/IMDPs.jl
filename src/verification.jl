@@ -17,6 +17,18 @@ function pctl_verification(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String
 end
 
 """
+    pctl_verification
+
+Given the components to create an IMDP and a specification with labels, perform PCTL verificaion.
+"""
+function pctl_verification(P̌_array, P̂_array, specification_filename::String, state_means, results_dir::String)
+    imdp = create_imdp(P̌_array, P̂_array, specification_filename::String, state_means)
+    _, _, ϕ1, ϕ2, steps, spec_name = IMDPs.load_PCTL_specification(specification_filename)
+    result_matrix = IMDPs.pctl_verification(imdp, ϕ1, ϕ2, steps, results_dir, spec_name)
+    return result_matrix
+end
+
+"""
     bounded_until
 
 Perform verification of a bounded-until property indicated by phi1 U phi2 within k steps (k = -1 is infinite horizon)
@@ -47,7 +59,13 @@ function bounded_until(imdp::IMDP, phi1::Union{Nothing,String}, phi2::String,
     imdp_filename = "$result_dir/$spec_name-IMDP.txt"
     write(imdp_filename, imdp, acc_states=acc_states, sink_states=sink_states)
     mode1 = synthesis_flag ? "maximize" : "minimize"
-    result_mat = run_imdp_synthesis(imdp_filename, k; mode1=mode1, mode2="pessimistic", tag=spec_name)
+
+    globally_flag = isnothing(phi1)
+    if synthesis_flag
+        result_mat = optimistic_synthesis(imdp_filename, k; tag=spec_name, globally_flag=globally_flag)
+    else
+        result_mat = run_imdp_synthesis(imdp_filename, k; mode1="minimize", mode2="pessimistic", tag=spec_name)
+    end
 
     return result_mat 
 end
@@ -98,13 +116,23 @@ end
 """
 Run optimistic IMDP syntheis, both on the LB and UB
 """
-function optimistic_synthesis(imdp_file, horizon; tag=nothing)
+function optimistic_synthesis(imdp_file, horizon; tag=nothing, globally_flag=false)
     res_mat = run_imdp_synthesis(imdp_file, horizon, tag=tag)
     res_mat_opt = run_imdp_synthesis(imdp_file, horizon, mode2="optimistic", tag=tag)
-    for j in 1:length(res_mat[:,1])
-        if res_mat[j, 3] == res_mat_opt[j, 3] && res_mat_opt[j,4] > res_mat[j,4] 
-            res_mat[j, 2] = res_mat_opt[j, 2]
-            res_mat[j, 4] = res_mat_opt[j, 4] 
+
+    if globally_flag
+        for j in 1:length(res_mat[:,1])
+            if res_mat[j, 4] == res_mat_opt[j, 4] && res_mat_opt[j,3] < res_mat[j,3] 
+                res_mat[j, 2] = res_mat_opt[j, 2]
+                res_mat[j, 3] = res_mat_opt[j, 3] 
+            end
+        end
+    else
+        for j in 1:length(res_mat[:,1])
+            if res_mat[j, 3] == res_mat_opt[j, 3] && res_mat_opt[j,4] > res_mat[j,4] 
+                res_mat[j, 2] = res_mat_opt[j, 2]
+                res_mat[j, 4] = res_mat_opt[j, 4] 
+            end
         end
     end
 
