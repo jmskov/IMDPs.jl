@@ -56,7 +56,7 @@ function load_PCTL_specification(spec_filename::String)
     unsafe_default_flag = spec_data["default_outside_compact"]
 
     lbl_fcn = (point; unsafe=false) -> general_label_fcn(point, default_label, unsafe_label, labels_dict, unsafe=unsafe, unsafe_default=unsafe_default_flag)
-    return lbl_fcn, labels_dict, ϕ1, ϕ2, spec_data["steps"], spec_data["name"]
+    return lbl_fcn, labels_dict, ϕ1, ϕ2, unsafe_label, spec_data["steps"], spec_data["name"]
 end
 
 """
